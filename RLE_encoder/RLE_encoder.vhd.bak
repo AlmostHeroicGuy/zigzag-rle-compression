@@ -1,0 +1,158 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity RLE_encoder is
+    port (
+        clk            : in  std_logic;
+        reset          : in  std_logic;
+        start          : in  std_logic;
+        data_in        : in  std_logic_vector(7 downto 0);
+        data_out       : out std_logic_vector(15 downto 0);
+        done           : out std_logic;
+        reduced_length : out unsigned(7 downto 0)
+    );
+end entity;
+
+architecture arch of RLE_encoder is
+
+    ----------------------------------------------------------------
+    -- Matrix storage
+    ----------------------------------------------------------------
+    type mem_t is array (0 to 63) of std_logic_vector(7 downto 0);
+    signal mem : mem_t;
+
+    ----------------------------------------------------------------
+    -- Zigzag order for 8×8 matrix
+    ----------------------------------------------------------------
+    type zigzag_t is array (0 to 63) of integer range 0 to 63;
+    constant zigzag_order : zigzag_t := (
+        0, 1, 8,
+        16, 9, 2,
+        3, 10, 17, 24,
+        32, 25, 18, 11, 4,
+        5, 12, 19, 26, 33, 40,
+        48, 41, 34, 27, 20, 13, 6,
+        7, 14, 21, 28, 35, 42, 49, 56,
+        57, 50, 43, 36, 29, 22, 15,
+        23, 30, 37, 44, 51, 58,
+        59, 52, 45, 38, 31,
+        39, 46, 53, 60,
+        61, 54, 47,
+        55, 62,
+        63
+    );
+
+    ----------------------------------------------------------------
+    -- RLE Buffer
+    ----------------------------------------------------------------
+    type rle_t is array (0 to 63) of std_logic_vector(15 downto 0);
+    signal rle_buffer : rle_t;
+
+    ----------------------------------------------------------------
+    -- FSM Declarations
+    ----------------------------------------------------------------
+    type state_t is (IDLE, FILL_MATRIX, ENCODE, OUTPUT);
+    signal state        : state_t := IDLE;
+
+    signal fill_count   : integer range 0 to 64 := 0;
+    signal zz_idx       : integer range 0 to 64 := 0;
+    signal run_count    : unsigned(7 downto 0) := (others => '0');
+    signal run_symbol   : std_logic_vector(7 downto 0) := (others => '0');
+    signal rle_count    : integer range 0 to 64 := 0;
+    signal out_count    : integer range 0 to 64 := 0;
+
+begin
+
+    ----------------------------------------------------------------
+    -- Main FSM Process
+    ----------------------------------------------------------------
+    process(clk, reset)
+    begin
+        if reset = '1' then
+            state          <= IDLE;
+            fill_count     <= 0;
+            zz_idx         <= 0;
+            rle_count      <= 0;
+            out_count      <= 0;
+            run_count      <= (others => '0');
+            run_symbol     <= (others => '0');
+            reduced_length <= (others => '0');
+            done           <= '0';
+            data_out       <= (others => '0');
+
+        elsif rising_edge(clk) then
+            case state is
+
+                ----------------------------------------------------
+                when IDLE =>
+                    done <= '0';
+                    if start = '1' then
+                        fill_count <= 0;
+                        state <= FILL_MATRIX;
+                    end if;
+
+                ----------------------------------------------------
+                when FILL_MATRIX =>
+                    mem(fill_count) <= data_in;
+                    if fill_count = 63 then
+                        zz_idx     <= 0;
+                        rle_count  <= 0;
+                        run_symbol <= mem(0);  -- will get valid next cycle
+                        run_count  <= (others => '0');
+                        state <= ENCODE;
+                    else
+                        fill_count <= fill_count + 1;
+                    end if;
+
+                ----------------------------------------------------
+                when ENCODE =>
+                    -- current symbol from zigzag index
+                    variable curr_symbol : std_logic_vector(7 downto 0);
+                    variable next_symbol : std_logic_vector(7 downto 0);
+                    begin
+                        curr_symbol := mem(zigzag_order(zz_idx));
+
+                        if zz_idx = 0 then
+                            run_symbol <= curr_symbol;
+                            run_count  <= to_unsigned(1,8);
+                        else
+                            if curr_symbol = run_symbol then
+                                run_count <= run_count + 1;
+                            else
+                                -- store run into buffer
+                                rle_buffer(rle_count) <= std_logic_vector(run_count) & run_symbol;
+                                rle_count <= rle_count + 1;
+                                run_symbol <= curr_symbol;
+                                run_count  <= to_unsigned(1,8);
+                            end if;
+                        end if;
+
+                        if zz_idx = 63 then
+                            -- push last run
+                            rle_buffer(rle_count) <= std_logic_vector(run_count) & run_symbol;
+                            rle_count <= rle_count + 1;
+                            reduced_length <= to_unsigned(rle_count+1,8);
+                            out_count <= 0;
+                            state <= OUTPUT;
+                        else
+                            zz_idx <= zz_idx + 1;
+                        end if;
+                    end;
+
+                ----------------------------------------------------
+                when OUTPUT =>
+                    data_out <= rle_buffer(out_count);
+                    done <= '1';
+                    if out_count = rle_count-1 then
+                        state <= IDLE;
+                        done  <= '0';
+                    else
+                        out_count <= out_count + 1;
+                    end if;
+
+            end case;
+        end if;
+    end process;
+
+end architecture;

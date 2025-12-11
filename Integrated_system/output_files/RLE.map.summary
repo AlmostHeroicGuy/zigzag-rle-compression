@@ -1,0 +1,16 @@
+Analysis & Synthesis Status : Successful - Wed Nov 05 10:36:46 2025
+Quartus Prime Version : 18.1.0 Build 625 09/12/2018 SJ Lite Edition
+Revision Name : RLE
+Top-level Entity Name : Toplevel
+Family : MAX 10
+Total logic elements : 8,255
+    Total combinational functions : 3,870
+    Dedicated logic registers : 4,534
+Total registers : 4534
+Total pins : 4
+Total virtual pins : 0
+Total memory bits : 512
+Embedded Multiplier 9-bit elements : 0
+Total PLLs : 0
+UFM blocks : 0
+ADC blocks : 0

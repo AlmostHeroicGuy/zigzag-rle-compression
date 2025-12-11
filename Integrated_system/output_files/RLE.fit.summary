@@ -1,0 +1,18 @@
+Fitter Status : Successful - Wed Nov 05 10:37:24 2025
+Quartus Prime Version : 18.1.0 Build 625 09/12/2018 SJ Lite Edition
+Revision Name : RLE
+Top-level Entity Name : Toplevel
+Family : MAX 10
+Device : 10M25SAE144C8G
+Timing Models : Final
+Total logic elements : 5,976 / 24,960 ( 24 % )
+    Total combinational functions : 3,873 / 24,960 ( 16 % )
+    Dedicated logic registers : 4,534 / 24,960 ( 18 % )
+Total registers : 4534
+Total pins : 4 / 101 ( 4 % )
+Total virtual pins : 0
+Total memory bits : 512 / 691,200 ( < 1 % )
+Embedded Multiplier 9-bit elements : 0 / 110 ( 0 % )
+Total PLLs : 0 / 1 ( 0 % )
+UFM blocks : 0 / 1 ( 0 % )
+ADC blocks : 0 / 1 ( 0 % )

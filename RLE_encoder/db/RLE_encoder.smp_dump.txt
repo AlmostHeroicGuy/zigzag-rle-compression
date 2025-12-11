@@ -1,0 +1,8 @@
+
+State Machine - |RLE_encoder|state
+Name state.output state.compress state.initialize state.fill_inputs state.idle 
+state.idle 0 0 0 0 0 
+state.fill_inputs 0 0 0 1 1 
+state.initialize 0 0 1 0 1 
+state.compress 0 1 0 0 1 
+state.output 1 0 0 0 1 

@@ -1,0 +1,7 @@
+
+State Machine - |RLE_decoder|state
+Name state.output_data state.expand_rle state.fill_rle_buffer state.idle 
+state.idle 0 0 0 0 
+state.fill_rle_buffer 0 0 1 1 
+state.expand_rle 0 1 0 1 
+state.output_data 1 0 0 1 
